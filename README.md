@@ -1,303 +1,328 @@
 # PropertyOps Agentic OS
 
-### Deterministic-first agent architecture for residential property operations
+### Deterministic-first agent architecture for 24/7 residential property operations
 
-PropertyOps Agentic OS is an engineering portfolio project exploring how a 24/7 property-operations layer can combine deterministic software, local LLMs, retrieval, structured state, reliable integrations, and human escalation without sending entire customer histories to a model on every step.
+PropertyOps Agentic OS is a hands-on engineering portfolio project for building a reliable agentic operating layer across CRM, messaging, leasing, maintenance and operational workflows.
 
 > **Core design principle:** use ordinary software for decisions that can be deterministic. Use an LLM only when reasoning or classification is actually needed.
 
 **Status:** Portfolio / controlled sandbox  
 **Live system:** https://propertyops-agentic-os.streamlit.app/  
-**Public repository:** https://github.com/hmzainjamil/propertyops-agentic-os-showcase
+**Public showcase:** https://github.com/hmzainjamil/propertyops-agentic-os-showcase  
+**Full implementation:** private source repository
 
-> **Scope note:** This repository is a public technical showcase. The complete implementation remains private. No production secrets, provider credentials, customer data, or full source code are included here.
-
----
-
-## Contents
-
-- [At a glance](#at-a-glance)
-- [Architecture](#architecture)
-- [How the system thinks](#how-the-system-thinks)
-- [Engineering controls](#engineering-controls)
-- [Measured evidence](#measured-evidence)
-- [Implemented vs mocked](#implemented-vs-mocked)
-- [Audit-driven development](#audit-driven-development)
-- [Repository structure](#repository-structure)
-- [Production gaps](#production-gaps)
-- [Technical review](#technical-review)
+> **Scope:** The public repository is documentation-only. It does not contain the complete implementation, credentials, production secrets, customer data or private evaluation assets.
 
 ---
 
 ## At a glance
 
-| Concern | Approach |
+| Area | Approach |
 |---|---|
-| Workflow | Deterministic-first state machines and policy gates |
-| Context | Structured tenant / prospect state plus targeted retrieval |
-| Model routing | Local model for lighter tasks, stronger model only when justified |
-| Safety | Hazard triage, autonomy tiers A0-A4, human escalation |
-| Reliability | Idempotency, outbox, retries, DLQ, replay, reconciliation |
-| Integrations | Adapter contracts for Follow Up Boss, Twilio, ShowMojo, Rentvine and n8n designs |
-| Observability | OpenTelemetry, metrics, traces and operational dashboards |
-| Auditability | Immutable DecisionReceipt records |
-| Evaluation | Unit, property-based, API contract, fault-injection, chaos and load testing |
+| Runtime | Python, FastAPI, Streamlit, Docker |
+| State | Tenant / prospect state, versioned transitions, compare-and-swap |
+| Data | SQLite in the portfolio environment |
+| Models | Ollama qwen2.5:7b, routed fallbacks, budgeted frontier escalation |
+| Retrieval | Hybrid BM25 + embedding retrieval with tenant filtering |
+| Orchestration | Core workflow engine plus n8n workflow designs |
+| Integrations | Follow Up Boss, Twilio, ShowMojo, Rentvine adapter contracts |
+| Reliability | Idempotency, outbox, retries, DLQ, replay, reconciliation, circuit breaker |
+| Governance | A0-A4 autonomy tiers, human approval, DecisionReceipt audit trail |
+| Observability | OpenTelemetry, Prometheus metrics, traces and alert rules |
+| Evaluation | Unit, property-based, API contract, fault, chaos, load and adversarial testing |
+
+---
+
+## Why the architecture is different
+
+A basic automation often looks like:
+
+~~~text
+Trigger -> Send full history to GPT -> Response -> Next node
+~~~
+
+This project uses:
+
+~~~text
+Event -> State -> Deterministic logic -> Targeted retrieval
+      -> Model only when needed -> Validated action
+      -> State update -> Next action
+~~~
+
+The system keeps state and safety-critical decisions under explicit software control and uses models as bounded components.
+
+---
+
+## Capability coverage
+
+The private implementation contains more than the public repository exposes.
+
+| Capability | Status |
+|---|---|
+| Lead intake, qualification, outreach and reply handling | Built |
+| Stalled-lead detection and reactivation | Built |
+| Meeting workflow | Built |
+| Maintenance intake and emergency triage | Built |
+| Work orders, vendor dispatch and follow-through | Built |
+| Human approval and escalation | Built |
+| Tenant setup and tenant-scoped configuration | Built |
+| Analytics, health and reliability views | Built |
+| Decision and trace inspection | Built |
+| Compliance and suppression controls | Built |
+| Local model routing and hybrid retrieval | Built |
+| Shadow ML lead scoring | Built |
+| n8n workflows | Designed |
+| Real provider E2E | Not yet |
+| BricksFolios proprietary platform integration | Not yet |
+
+See [CAPABILITIES.md](CAPABILITIES.md).
 
 ---
 
 ## Architecture
 
-The system follows an event-driven loop:
+### Control loop
 
-```text
+~~~text
 Event
-  ↓
-Authentication + idempotency
-  ↓
-Structured state
-  ↓
-Deterministic policy / rules
-  ↓
-Retrieval when needed
-  ↓
-Model only when needed
-  ↓
-Structured decision
-  ↓
-Autonomy / human-approval gate
-  ↓
-Validated action
-  ↓
-Outbox / retry / DLQ
-  ↓
-Decision receipt + telemetry
-  ↓
-State update
-```
+  -> Authenticate + validate
+  -> Idempotency / event status
+  -> Load structured state
+  -> Deterministic rules
+  -> Targeted retrieval
+  -> Model only when needed
+  -> Structured decision
+  -> A0-A4 policy gate
+  -> Human approval or validated action
+  -> Outbox / retry / DLQ
+  -> DecisionReceipt + telemetry
+  -> State update
+~~~
 
-### Architecture at a glance
+### Model routing
 
-```mermaid
-flowchart LR
-    A[Inbound event] --> B[Auth + idempotency]
-    B --> C[Structured state]
-    C --> D{Deterministic?}
-    D -->|Yes| E[Rules / policy]
-    D -->|No| F[Targeted retrieval]
-    F --> G[Local model]
-    G --> H{Needs stronger reasoning?}
-    H -->|Yes| I[Frontier model]
-    H -->|No| J[Structured decision]
-    E --> J
-    I --> J
-    J --> K[A0-A4 autonomy gate]
-    K --> L{Human escalation?}
-    L -->|Yes| M[Human queue / pager]
-    L -->|No| N[Validated action]
-    M --> N
-    N --> O[Outbox + retry / DLQ]
-    O --> P[DecisionReceipt + telemetry]
-    P --> C
-```
+1. Deterministic rules get first decision rights.
+2. Local Ollama handles eligible lightweight classification.
+3. A controlled fallback path can be used when the local model is unavailable.
+4. Frontier reasoning is budgeted and reserved for harder cases.
+5. Invalid or low-confidence outputs escalate rather than silently producing unsafe actions.
+6. Model calls record tier, provider, model, tokens, cost and latency.
 
 ---
 
-## How the system thinks
+## State, memory and context
 
-The architecture is designed around a simple question at every step:
+The system does not repeatedly send complete customer histories to a model.
 
-**Does this actually require an LLM?**
+Structured state includes:
 
-Examples:
-
-| Decision | Preferred mechanism |
-|---|---|
-| Webhook authentication | Deterministic code |
-| Idempotency / duplicate detection | Deterministic code |
-| Opt-out handling | Deterministic rules |
-| Emergency safety checks | Deterministic rules first |
-| Workflow state transitions | State machine |
-| Knowledge lookup | Retrieval |
-| Simple intent classification | Local model |
-| Ambiguous classification | Local model, then stronger model if needed |
-| Complex reasoning / research | Frontier model |
-| High-risk or unresolved exception | Human escalation |
-
-The goal is to reduce unnecessary model calls while keeping state, safety, and side effects under explicit software control.
-
----
-
-## Engineering controls
-
-### State and memory
-
-The system does not rely on repeatedly sending full CRM histories to a model. Structured state tracks items such as:
-
-- current workflow stage
+- lifecycle stage
 - recent meaningful events
-- communication preferences and consent
+- consent and suppression
 - open work orders
 - risk flags
-- relevant tenant, property or prospect attributes
+- ICP and intent
 - next action
+- provider identifiers
+- state version
 
-Only the context needed for the current decision is retrieved.
+Retrieval is tenant-filtered and only relevant context is assembled for the current decision.
 
-### Reliability
+---
 
-The implementation includes:
+## Reliability and failure recovery
 
-- idempotency and duplicate suppression
+Implemented controls include:
+
+- unique event and tool idempotency keys
+- reprocessable event status
+- compare-and-swap state versions
+- bounded retries with backoff and jitter
 - outbox processing
-- bounded retries
 - dead-letter queue and replay
 - reconciliation after partial failure
-- circuit-breaker behaviour
+- circuit breaker
 - approval timeouts
 - fallback escalation
-- provider adapter contracts
+- webhook ACK before background work
+- rate limiting
+- provider-side duplicate accounting
 
-### Governance
+See [ARCHITECTURE.md](ARCHITECTURE.md).
 
-A0-A4 autonomy tiers define the level of autonomous action permitted by the workflow. Material actions can produce an immutable DecisionReceipt so the decision path and human involvement can be reconstructed.
+---
+
+## Governance and safety
+
+A0-A4 autonomy tiers define how much the system may act without a human.
+
+Deterministic safety controls cover areas such as:
+
+- opt-out and suppression
+- quiet hours
+- frequency caps
+- sender verification
+- webhook signatures
+- high-risk maintenance routing
+- irreversible-action blocking
+- human approval on high-risk paths
+
+The compliance matrix is a technical self-assessment, not legal sign-off.
+
+---
+
+## Integrations and orchestration
+
+Provider adapter contracts cover:
+
+- Follow Up Boss
+- Twilio
+- ShowMojo
+- Rentvine
+- n8n
+
+n8n designs cover webhook intake, stalled-lead scanning and error handling.
+
+The core workflow engine retains state, policy, idempotency and safety logic rather than moving business-critical decisions into n8n.
+
+---
+
+## Operator surfaces
+
+The live Streamlit app includes views for leads, replies, maintenance, approvals, decisions, evaluations, failures, health, reliability, traces, analytics and tenant setup.
+
+The goal is not only automation. It is inspectable automation.
 
 ---
 
 ## Measured evidence
 
-The internal engineering scorecard records these results after remediation:
+| Metric | Result |
+|---|---:|
+| Automated tests | **396** |
+| Statement coverage | **90.7%** |
+| Release gates | **13/13** |
+| Emergency recall | **0.911** |
+| Emergency false-emergency rate | **0.114** |
+| Emergency safety | **239/239** |
+| Reply intent accuracy | **0.917** |
+| Deterministic reply decisions | **62.5%** |
+| Hybrid retrieval recall@3 | **0.955** |
+| Lead qualification | **1.0** |
+| Intent-band classification | **1.0** |
+| Load | **334.7 req/s** |
+| ACK p95 | **410 ms** |
+| Chaos soak | **300 events, 0 invariant violations** |
+| mypy | **0 errors** |
+| ruff | **clean** |
+| bandit | **clean** |
+| SBOM | **104 components** |
 
-| Metric | Result | Limitation |
-|---|---:|---|
-| Automated tests | **396** | Controlled test environment |
-| Statement coverage | **90.7%** | `propertyops/` package |
-| Release gates | **13/13** | Portfolio release gate, not production certification |
-| Emergency recall | **0.911** | Frozen out-of-sample rules test |
-| Emergency safety | **239/239** | Tested emergency messages avoided the routine reply path |
-| Reply intent accuracy | **0.917** | 48 hand-written examples in documented Ollama evaluation |
-| Load | **334.7 req/s** | Real uvicorn, 600 requests, concurrency 50 |
-| ACK p95 | **410 ms** | Same controlled load run |
+These are controlled engineering results. They are not production guarantees.
 
-These are controlled engineering measurements. They do not establish production uptime, real-provider reliability, legal compliance, enterprise security certification, production-scale performance, human-labelled accuracy, or ROI.
-
----
-
-## Implemented vs mocked
-
-### Implemented in the private project
-
-- Core event engine
-- Structured state management
-- Deterministic routing and policy logic
-- Local Ollama integration
-- Hybrid retrieval
-- Synthetic ML shadow model
-- FastAPI webhook service
-- OpenTelemetry instrumentation
-- Docker build
-- Evaluation and fault-injection framework
-- Operator UI
-
-### Mocked or design-only
-
-- Follow Up Boss provider behaviour
-- Twilio provider behaviour
-- ShowMojo provider behaviour
-- Rentvine provider behaviour
-- Frontier model provider
-- n8n deployment
-- Production-scale Postgres / Redis topology
-- Production customer data
-
-The project does not claim production certification, enterprise security certification, legal approval, or real-provider end-to-end validation.
+See [EVIDENCE.md](EVIDENCE.md).
 
 ---
 
 ## Audit-driven development
 
-The project was subjected to an adversarial hard audit that tried to break the assumptions behind the original design.
+The project was intentionally subjected to an adversarial hard audit.
 
-Findings included:
+Early findings included unsigned webhook acceptance, emergency-rule overfitting, lost leads after failure, opt-out defects, duplicate emergency dispatch, tenant identity spoofing, incomplete approval paths and simulator fail-open behaviour.
 
-- unsigned webhook acceptance
-- emergency-rule overfitting
-- lost leads after a mid-flight failure
-- opt-out handling defects
-- duplicate emergency dispatches
-- tenant identity spoofing
-- incomplete approval paths
-- simulator fail-open behaviour
+Those findings were converted into fixes and regression tests.
 
-The findings were converted into fixes and regression tests.
+The key evidence is the failure-and-remediation cycle, not a claim that the first version was perfect.
 
-This is intentional. The project treats failure analysis and remediation as part of the engineering evidence, not something to hide behind a polished demo.
+See [AUDIT.md](AUDIT.md).
+
+---
+
+## Quality and security posture
+
+The private project includes:
+
+- boundary validation
+- signed webhooks and Twilio signature verification
+- rate limiting
+- PII redaction
+- consent and suppression controls
+- retention and erasure mechanisms
+- model and tool ledgers
+- OpenTelemetry
+- Prometheus metrics and alerts
+- Docker packaging
+- static analysis and dependency checks
+- adversarial and fault-injection tests
+
+No independent security certification or penetration-test sign-off is claimed.
 
 ---
 
 ## Repository structure
 
-This public repository intentionally stays small:
-
-```text
+~~~text
 .
 ├── README.md
+├── CAPABILITIES.md
 ├── ARCHITECTURE.md
 ├── EVIDENCE.md
+├── AUDIT.md
 └── LIMITATIONS.md
-```
+~~~
 
-The complete implementation, tests, internal evaluation assets and deployment configuration remain in the private source repository.
+The complete implementation, tests, datasets, model registry, deployment configuration and internal documentation remain private.
 
 ---
 
-## Production gaps
+## Production boundary
 
-Before real production use, the project still requires external validation in several areas:
+This project is a serious engineering portfolio artifact and controlled sandbox design. It is **not** a production-certified property-management platform.
 
-1. Real sandbox testing against Follow Up Boss, Twilio, ShowMojo and Rentvine
+Before real production use it still needs:
+
+1. Real sandbox testing with provider APIs
 2. Independent penetration testing and security review
-3. Human-labelled evaluation data
-4. Production-grade Postgres / Redis deployment and disaster recovery
-5. Deployed telemetry collection, alerting and operational SLOs
+3. Human-labelled production-like evaluation data
+4. Production Postgres / Redis deployment and recovery testing
+5. Deployed telemetry collection and real alert routing
 6. Jurisdiction-specific legal and compliance review
+7. Integration with the target Node.js / MongoDB / RDS platform
 
-These are documented limitations, not hidden assumptions.
-
-See [LIMITATIONS.md](LIMITATIONS.md) for the full boundary.
+See [LIMITATIONS.md](LIMITATIONS.md).
 
 ---
 
 ## Technical review
 
-For a serious technical evaluation, the project can be walked through at the implementation level, including:
+A technical review can cover:
 
-1. architecture and state transitions
-2. model routing and token-efficiency decisions
-3. safety and escalation logic
-4. idempotency and failure recovery
-5. evaluation methodology and held-out testing
-6. adversarial audit findings and remediation
-
-### Public materials
-
-- [Architecture](ARCHITECTURE.md)
-- [Evidence and measurements](EVIDENCE.md)
-- [Limitations and production gaps](LIMITATIONS.md)
+- architecture and state transitions
+- model routing and token efficiency
+- retrieval and context assembly
+- safety and autonomy controls
+- idempotency and failure recovery
+- evaluation methodology
+- audit findings and remediation
 
 ### Live demo
 
-**https://propertyops-agentic-os.streamlit.app/**
+https://propertyops-agentic-os.streamlit.app/
 
-### Public showcase repository
+### Public showcase
 
-**https://github.com/hmzainjamil/propertyops-agentic-os-showcase**
+https://github.com/hmzainjamil/propertyops-agentic-os-showcase
+
+### Full source
+
+The complete implementation remains private and can be made available for controlled technical evaluation.
 
 ---
 
-## Final scope statement
+## Scope statement
 
-This repository is a technical showcase of an agentic architecture and its engineering evidence.
+This public repository documents the architecture and engineering evidence of PropertyOps Agentic OS.
 
-It is **not** presented as a production-certified property-management platform.
+It intentionally does not expose the complete implementation.
 
-The full source implementation remains private and can be made available in a controlled technical evaluation.
+It should be reviewed as an engineering artifact, not mistaken for production certification.
