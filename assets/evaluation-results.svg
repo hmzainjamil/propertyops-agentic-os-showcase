@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620">
+  <rect width="1200" height="620" fill="#0b1020"/>
+  <text x="70" y="60" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700">Selected Evaluation Results</text>
+  <text x="70" y="90" fill="#a9b4c6" font-family="Arial, Helvetica, sans-serif" font-size="15">Controlled portfolio measurements · not production guarantees</text>
+
+  <line x1="100" y1="500" x2="1120" y2="500" stroke="#53627a" stroke-width="2"/>
+  <line x1="100" y1="120" x2="100" y2="500" stroke="#53627a" stroke-width="2"/>
+
+  <g fill="#9eafc6" font-family="Arial, Helvetica, sans-serif" font-size="13">
+    <text x="70" y="504" text-anchor="end">0</text>
+    <text x="70" y="428" text-anchor="end">20</text>
+    <text x="70" y="352" text-anchor="end">40</text>
+    <text x="70" y="276" text-anchor="end">60</text>
+    <text x="70" y="200" text-anchor="end">80</text>
+    <text x="70" y="124" text-anchor="end">100</text>
+  </g>
+
+  <g fill="#5b8def">
+    <rect x="145" y="153" width="70" height="347"/>
+    <rect x="285" y="121" width="70" height="379"/>
+    <rect x="425" y="153" width="70" height="347"/>
+    <rect x="565" y="121" width="70" height="379"/>
+    <rect x="705" y="138" width="70" height="362"/>
+    <rect x="845" y="137" width="70" height="363"/>
+  </g>
+
+  <g fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" text-anchor="middle">
+    <text x="180" y="145">91.1%</text>
+    <text x="320" y="113">100%</text>
+    <text x="460" y="145">91.7%</text>
+    <text x="600" y="113">100%</text>
+    <text x="740" y="130">95.5%</text>
+    <text x="880" y="129">95.5%</text>
+  </g>
+
+  <g fill="#c5d0df" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle">
+    <text x="180" y="525">Emergency</text>
+    <text x="180" y="544">recall</text>
+    <text x="320" y="525">Lead</text>
+    <text x="320" y="544">qualification</text>
+    <text x="460" y="525">Reply</text>
+    <text x="460" y="544">intent</text>
+    <text x="600" y="525">Intent</text>
+    <text x="600" y="544">bands</text>
+    <text x="740" y="525">Hybrid</text>
+    <text x="740" y="544">recall@3</text>
+    <text x="880" y="525">Emergency</text>
+    <text x="880" y="544">safety</text>
+  </g>
+
+  <g fill="#9eafc6" font-family="Arial, Helvetica, sans-serif" font-size="13">
+    <text x="950" y="175">Additional engineering evidence</text>
+    <text x="950" y="205">396 automated tests</text>
+    <text x="950" y="230">90.7% statement coverage</text>
+    <text x="950" y="255">13/13 release gates</text>
+    <text x="950" y="280">334.7 req/s load result</text>
+    <text x="950" y="305">410 ms ACK p95</text>
+    <text x="950" y="330">300-event chaos soak</text>
+    <text x="950" y="355">0 mypy errors</text>
+    <text x="950" y="380">ruff clean</text>
+    <text x="950" y="405">bandit clean</text>
+    <text x="950" y="430">104 SBOM components</text>
+  </g>
+</svg>
