@@ -1,72 +1,208 @@
 # Architecture
 
-## Design principles
+## System objective
 
-### 1. Deterministic first
+The system is designed as an event-driven operating layer across CRM, messaging, maintenance and related property workflows.
 
-Rules, state machines and policy checks handle safety-critical and predictable decisions wherever possible.
+The guiding sequence is:
 
-### 2. Models are a bounded component
+~~~text
+Event -> State -> Deterministic Logic -> Retrieval
+     -> Model if Needed -> Action -> Validation
+     -> State Update -> Next Action
+~~~
 
-A model is not the source of truth for every workflow. Model use is constrained by routing, budgets, policy, confidence and escalation rules.
+## Architecture layers
 
-### 3. State is explicit
+### 1. Event gateway
 
-The workflow tracks tenant and operational state rather than relying on conversation history alone.
+Inbound provider events are:
 
-### 4. Side effects are controlled
+- authenticated
+- schema-validated
+- assigned an idempotency key
+- acknowledged quickly
+- moved to background processing
 
-Actions are passed through idempotency keys, an outbox pattern, retry handling and dead-letter processing.
+The portfolio API includes webhook paths for general events and Twilio callbacks.
 
-### 5. Human escalation is a feature
+### 2. State layer
 
-A0-A4 autonomy tiers define what the system may do automatically and when a human must intervene.
+State is explicit and durable in the portfolio environment.
 
-## Main flow
+The model includes records for:
 
-```text
-1. Receive event
-2. Authenticate sender / webhook
-3. Assign idempotency key
-4. Load tenant and workflow state
-5. Apply deterministic safety and policy rules
-6. Retrieve relevant knowledge if required
-7. Invoke local or stronger model only when needed
-8. Produce structured decision
-9. Apply autonomy tier
-10. Execute or escalate
-11. Persist audit receipt
-12. Update state
-13. Record telemetry
-14. Retry, replay or dead-letter on failure
-```
-
-## Autonomy tiers
-
-| Tier | Meaning |
+| Record | Purpose |
 |---|---|
-| A0 | No autonomous action. Human decision required. |
-| A1 | Low-risk assistive action with strong constraints. |
-| A2 | Bounded workflow action with policy validation. |
-| A3 | Higher autonomy within explicit guardrails and escalation rules. |
-| A4 | Highest permitted autonomy under the configured governance policy. |
+| Events | Idempotency, audit and processing status |
+| Leads | Canonical lifecycle, ICP, intent and next action |
+| Lead events | Compact interaction history |
+| Transitions | Who changed state, why and with what confidence |
+| Tool calls | Side effects, attempts and idempotency |
+| Model calls | Tier, provider, model, tokens, cost and latency |
+| Approvals | Human decisions and outcomes |
+| DLQ | Failed events and tool calls |
+| Work orders | Maintenance lifecycle and vendor timeline |
+| Traces | Redacted execution detail |
+| Suppression | Opt-out and erasure tombstones |
 
-The tier is a control mechanism, not a statement that the system is safe for unrestricted deployment.
+State transitions use version checks to reduce concurrent-write races.
 
-## Reliability controls
+### 3. Deterministic policy layer
 
-The implementation includes:
+Rules handle decisions that do not need probabilistic reasoning, including:
 
-- idempotency and duplicate suppression
-- outbox processing
+- authentication
+- idempotency
+- opt-out and suppression
+- quiet hours
+- frequency caps
+- routing
+- state transitions
+- hazard detection
+- irreversible-action blocking
+
+### 4. Retrieval layer
+
+Knowledge retrieval is tenant-filtered and uses a hybrid approach combining lexical and embedding retrieval. The goal is to supply only the records and knowledge needed for the current decision.
+
+### 5. Model router
+
+The router uses progressively more expensive reasoning:
+
+~~~text
+Rules
+  |
+  +--> no model required
+  |
+  +--> local Ollama classification
+          |
+          +--> accepted
+          |
+          +--> fallback / stronger reasoning
+                    |
+                    +--> frontier model if budget and policy allow
+                    |
+                    +--> human escalation
+~~~
+
+Model calls are schema-constrained, confidence-checked and ledgered.
+
+### 6. Action layer
+
+Side effects go through bounded tools and provider adapters.
+
+Key controls include:
+
+- idempotency keys
 - retry limits
-- dead-letter queue and replay
-- reconciliation after partial failure
-- circuit-breaker behaviour
-- approval timeouts
-- fallback escalation
-- provider adapter contracts
+- outbox processing
+- timeout handling
+- provider acknowledgement
+- dead-letter routing
+- reconciliation
+- human takeover
 
-## Audit trail
+### 7. Governance layer
 
-Each material decision can produce an immutable DecisionReceipt containing enough structured context to reconstruct what the system decided, what policy path it used, what action followed, and whether a human decision was involved.
+A0-A4 autonomy tiers define what the system may do automatically.
+
+Material decisions can produce a DecisionReceipt describing the decision path, policy context, actor, confidence and resulting action.
+
+### 8. Observability layer
+
+The portfolio implementation includes:
+
+- OpenTelemetry spans
+- redacted trace records
+- model and tool ledgers
+- Prometheus-format metrics
+- health and reliability views
+- alert-rule evaluation
+- reconciliation reporting
+
+## Workflow examples
+
+### Lead workflow
+
+~~~text
+lead.created
+ -> validate + dedupe
+ -> load lead state
+ -> ICP / intent scoring
+ -> policy check
+ -> outreach or human review
+ -> record action
+ -> wait for next event
+~~~
+
+### Maintenance workflow
+
+~~~text
+tenant.message
+ -> authenticate + identify tenant
+ -> load property context
+ -> deterministic hazard check
+ -> local model only if needed
+ -> severity / policy decision
+ -> create or update work order
+ -> vendor dispatch
+ -> acknowledgement timer
+ -> retry / re-dispatch / human takeover
+ -> reconcile state
+~~~
+
+### Reply workflow
+
+~~~text
+lead.reply
+ -> suppression / opt-out check
+ -> deterministic classification where possible
+ -> local model for ambiguous intent
+ -> escalation for objection / high-value / uncertainty
+ -> validated response or human review
+ -> CRM state update
+~~~
+
+## Provider boundary
+
+The architecture defines adapter contracts for:
+
+- Follow Up Boss
+- Twilio
+- ShowMojo
+- Rentvine
+- n8n
+
+The portfolio environment uses mocked provider behaviour. Real sandbox validation is a remaining external dependency.
+
+## n8n boundary
+
+n8n is used as an orchestration boundary rather than the source of truth for core state.
+
+Current design workflows cover webhook intake, stalled-lead scanning and error handling.
+
+Core policies, state transitions, idempotency and safety remain in application code.
+
+## Failure model
+
+The system assumes events and provider calls can fail, repeat or complete partially.
+
+Recovery mechanisms include:
+
+- reprocessable event status
+- bounded retry with backoff
+- DLQ + replay
+- compare-and-swap state versions
+- reconciliation
+- circuit breaker
+- approval timeout escalation
+- fallback human routing
+
+The project was deliberately audited against these failure modes.
+
+## Deployment boundary
+
+The current portfolio environment uses SQLite and Docker-friendly packaging.
+
+Production-shaped elements such as Postgres / Redis, real provider sandboxes, deployed telemetry collection and real alert routing are documented as next-stage infrastructure rather than claimed production capabilities.
