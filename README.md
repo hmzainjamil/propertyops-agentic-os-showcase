@@ -74,7 +74,6 @@ The internal engineering scorecard records the following after remediation:
 - **1.0 system-level safety result** for emergency messages avoiding the routine reply path across 239 tested messages
 - **0.917 reply-intent accuracy** on the documented hand-written evaluation set using the recorded local Ollama run
 - **334.7 requests/second** in the documented real-uvicorn load test at concurrency 50
-- **0 duplicate deliveries observed** under the documented idempotency and fault-injection tests, with provider-side duplicate accounting implemented after audit
 
 These are engineering test results from synthetic or controlled evaluation data. They are not production performance guarantees.
 
@@ -128,6 +127,13 @@ For a serious technical evaluation, I can provide controlled source access and w
 
 ## Public materials
 
-- [Architecture](docs/ARCHITECTURE.md)
-- [Evidence and measurements](docs/EVIDENCE.md)
-- [Limitations and production gaps](docs/LIMITATIONS.md)
+- [Architecture](ARCHITECTURE.md)
+- [Evidence and measurements](EVIDENCE.md)
+- [Limitations and production gaps](LIMITATIONS.md)
+
+## Live review
+
+- Live system: https://propertyops-agentic-os.streamlit.app/
+- Public showcase repository: https://github.com/hmzainjamil/propertyops-agentic-os-showcase
+
+The public repository is intentionally documentation-only. The complete implementation remains private.
