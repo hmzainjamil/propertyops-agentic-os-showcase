@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="760" viewBox="0 0 1400 760">
+  <rect width="1400" height="760" fill="#0b1020"/>
+  <text x="70" y="62" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700">PropertyOps Agentic OS · System Architecture</text>
+  <text x="70" y="96" fill="#a9b4c6" font-family="Arial, Helvetica, sans-serif" font-size="16">Deterministic-first control plane with bounded model use, explicit state, reliable side effects and human escalation</text>
+
+  <g font-family="Arial, Helvetica, sans-serif" font-size="15">
+    <g>
+      <rect x="70" y="150" rx="14" ry="14" width="180" height="72" fill="#17223b" stroke="#5b8def"/>
+      <text x="160" y="180" fill="#fff" text-anchor="middle" font-weight="700">Event Gateway</text>
+      <text x="160" y="204" fill="#b9c7dc" text-anchor="middle">auth · schema · ACK</text>
+    </g>
+
+    <g>
+      <rect x="290" y="150" rx="14" ry="14" width="180" height="72" fill="#17223b" stroke="#5b8def"/>
+      <text x="380" y="180" fill="#fff" text-anchor="middle" font-weight="700">Idempotency</text>
+      <text x="380" y="204" fill="#b9c7dc" text-anchor="middle">event/tool keys</text>
+    </g>
+
+    <g>
+      <rect x="510" y="150" rx="14" ry="14" width="180" height="72" fill="#17223b" stroke="#5b8def"/>
+      <text x="600" y="180" fill="#fff" text-anchor="middle" font-weight="700">Structured State</text>
+      <text x="600" y="204" fill="#b9c7dc" text-anchor="middle">tenant · lead · WO</text>
+    </g>
+
+    <g>
+      <rect x="730" y="130" rx="14" ry="14" width="220" height="112" fill="#152d25" stroke="#38b27d"/>
+      <text x="840" y="164" fill="#fff" text-anchor="middle" font-weight="700">Deterministic Policy</text>
+      <text x="840" y="188" fill="#b9c7dc" text-anchor="middle">opt-out · quiet hours</text>
+      <text x="840" y="210" fill="#b9c7dc" text-anchor="middle">risk · routing · state</text>
+    </g>
+
+    <g>
+      <rect x="990" y="130" rx="14" ry="14" width="180" height="112" fill="#2a2037" stroke="#9b7bde"/>
+      <text x="1080" y="164" fill="#fff" text-anchor="middle" font-weight="700">Retrieval</text>
+      <text x="1080" y="188" fill="#b9c7dc" text-anchor="middle">tenant-filtered</text>
+      <text x="1080" y="210" fill="#b9c7dc" text-anchor="middle">BM25 + embeddings</text>
+    </g>
+
+    <g>
+      <rect x="1200" y="130" rx="14" ry="14" width="130" height="112" fill="#32261a" stroke="#d9a441"/>
+      <text x="1265" y="164" fill="#fff" text-anchor="middle" font-weight="700">Local</text>
+      <text x="1265" y="188" fill="#b9c7dc" text-anchor="middle">Ollama</text>
+      <text x="1265" y="210" fill="#b9c7dc" text-anchor="middle">classification</text>
+    </g>
+
+    <g>
+      <rect x="990" y="310" rx="14" ry="14" width="180" height="88" fill="#32261a" stroke="#d9a441"/>
+      <text x="1080" y="344" fill="#fff" text-anchor="middle" font-weight="700">Frontier Model</text>
+      <text x="1080" y="368" fill="#b9c7dc" text-anchor="middle">budgeted escalation</text>
+    </g>
+
+    <g>
+      <rect x="730" y="310" rx="14" ry="14" width="220" height="88" fill="#17223b" stroke="#5b8def"/>
+      <text x="840" y="344" fill="#fff" text-anchor="middle" font-weight="700">Structured Decision</text>
+      <text x="840" y="368" fill="#b9c7dc" text-anchor="middle">schema + confidence</text>
+    </g>
+
+    <g>
+      <rect x="510" y="310" rx="14" ry="14" width="180" height="88" fill="#241f38" stroke="#9b7bde"/>
+      <text x="600" y="344" fill="#fff" text-anchor="middle" font-weight="700">A0–A4 Gate</text>
+      <text x="600" y="368" fill="#b9c7dc" text-anchor="middle">autonomy policy</text>
+    </g>
+
+    <g>
+      <rect x="290" y="310" rx="14" ry="14" width="180" height="88" fill="#152d25" stroke="#38b27d"/>
+      <text x="380" y="344" fill="#fff" text-anchor="middle" font-weight="700">Human / Action</text>
+      <text x="380" y="368" fill="#b9c7dc" text-anchor="middle">approve · execute</text>
+    </g>
+
+    <g>
+      <rect x="70" y="310" rx="14" ry="14" width="170" height="88" fill="#17223b" stroke="#5b8def"/>
+      <text x="155" y="344" fill="#fff" text-anchor="middle" font-weight="700">Outbox / DLQ</text>
+      <text x="155" y="368" fill="#b9c7dc" text-anchor="middle">retry · replay</text>
+    </g>
+
+    <g>
+      <rect x="70" y="485" rx="14" ry="14" width="270" height="92" fill="#17223b" stroke="#5b8def"/>
+      <text x="205" y="519" fill="#fff" text-anchor="middle" font-weight="700">Provider Adapter Layer</text>
+      <text x="205" y="543" fill="#b9c7dc" text-anchor="middle">FUB · Twilio · ShowMojo · Rentvine</text>
+    </g>
+
+    <g>
+      <rect x="380" y="485" rx="14" ry="14" width="210" height="92" fill="#241f38" stroke="#9b7bde"/>
+      <text x="485" y="519" fill="#fff" text-anchor="middle" font-weight="700">n8n Orchestration</text>
+      <text x="485" y="543" fill="#b9c7dc" text-anchor="middle">schedules · workflows</text>
+    </g>
+
+    <g>
+      <rect x="630" y="485" rx="14" ry="14" width="250" height="92" fill="#2b2030" stroke="#c065a7"/>
+      <text x="755" y="519" fill="#fff" text-anchor="middle" font-weight="700">DecisionReceipt + Telemetry</text>
+      <text x="755" y="543" fill="#b9c7dc" text-anchor="middle">OTel · metrics · traces</text>
+    </g>
+
+    <g>
+      <rect x="920" y="485" rx="14" ry="14" width="230" height="92" fill="#152d25" stroke="#38b27d"/>
+      <text x="1035" y="519" fill="#fff" text-anchor="middle" font-weight="700">Operator Surfaces</text>
+      <text x="1035" y="543" fill="#b9c7dc" text-anchor="middle">health · approvals · audit</text>
+    </g>
+  </g>
+
+  <g stroke="#8ea0ba" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M250 186 H290"/>
+    <path d="M470 186 H510"/>
+    <path d="M690 186 H730"/>
+    <path d="M950 186 H990"/>
+    <path d="M1170 186 H1200"/>
+    <path d="M1265 242 V310"/>
+    <path d="M1080 242 V310"/>
+    <path d="M990 354 H950"/>
+    <path d="M730 354 H690"/>
+    <path d="M510 354 H470"/>
+    <path d="M290 354 H240"/>
+    <path d="M155 398 V485"/>
+    <path d="M380 398 V485"/>
+    <path d="M600 398 V485"/>
+    <path d="M755 398 V485"/>
+    <path d="M950 398 C1030 430 1035 454 1035 485"/>
+    <path d="M755 577 C755 630 600 650 600 650 C600 650 600 630 600 577"/>
+  </g>
+
+  <text x="70" y="650" fill="#a9b4c6" font-family="Arial, Helvetica, sans-serif" font-size="15">Public showcase: architecture and evidence only · complete implementation remains private</text>
+</svg>
